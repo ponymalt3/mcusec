@@ -24,7 +24,7 @@
 #include <iostream>
 #include <stdint.h>
 
-#include "crypt.h"
+#include "AuthenicatedCallProvider.h"
 
 int main()
 {
@@ -35,8 +35,7 @@ int main()
 	
 	Crypt crypt(km);
 	
-	uint64_t rnd=crypt.getPseudoRandom();
-	rnd=(uint64_t('SRQP')<<32)+'ONML';
+	uint64_t rnd=(uint64_t('SRQP')<<32)+'ONML';
 	
 	Crypt::Hash hash;
 	crypt.sign(0,rnd,hash);
@@ -44,10 +43,10 @@ int main()
 	std::cout<<"hash: ";
 	for(uint32_t i=0;i<5;++i)
 	{
-		std::cout<<std::hex<<((hash[i]>>24)&0xFF);
-		std::cout<<std::hex<<((hash[i]>>16)&0xFF);
-		std::cout<<std::hex<<((hash[i]>>8)&0xFF);
-		std::cout<<std::hex<<((hash[i]>>0)&0xFF);
+		std::cout<<std::hex<<((hash.data[i]>>24)&0xFF);
+		std::cout<<std::hex<<((hash.data[i]>>16)&0xFF);
+		std::cout<<std::hex<<((hash.data[i]>>8)&0xFF);
+		std::cout<<std::hex<<((hash.data[i]>>0)&0xFF);
 	}
 	
 	std::cout<<std::dec<<" (should be b7d41243314081ed66be7ff92c61521b525ab85d)\n";
@@ -55,6 +54,20 @@ int main()
 	bool verified=crypt.verify(hash,0,rnd);
 	
 	std::cout<<"verified: "<<(verified?"true":"false")<<"\n";
+	
+	
+	AuthenicatedCallProvider acp(km);
+	
+	acp.registerFunction(99,0,[&](uint32_t data){
+		std::cout<<"function called with param = "<<(data)<<"\n";
+	});
+	
+	uint64_t token=acp.requestCallToken(99,123456789);
+	
+	Crypt::Hash authFunctionCall;
+	crypt.sign(0,token,authFunctionCall);
+	
+	acp.executeCall(authFunctionCall);
 	
 	return 0;
 }
