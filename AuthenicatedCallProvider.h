@@ -46,7 +46,7 @@ public:
   	uint32_t keyId;
   };
   
-	AuthenicatedCallProvider(KeyManager &keyManager)
+  AuthenicatedCallProvider(KeyManager &keyManager)
 	: m_keyManager(keyManager)
 	, m_crypt(keyManager)
 	, m_leastRecentlyCall(0)
