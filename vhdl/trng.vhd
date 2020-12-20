@@ -25,38 +25,24 @@ use ieee.numeric_std.all;
 entity trng is
   
   port (
-    clk_i     : in  std_ulogic;
-    reset_n_i : in  std_ulogic;
-    trng_o    : out std_ulogic_vector(31 downto 0));
+    clk_i      : in  std_ulogic;
+    reset_n_i  : in  std_ulogic;
+    re_i    : in  std_ulogic;
+    trng_o     : out std_ulogic_vector(31 downto 0);
+    valid_o : out std_ulogic);
 
 end entity trng;
 
 architecture rtl of trng is
 
-  function mix (
-    signal data : unsigned(15 downto 0);
-    constant even : boolean)
-    return unsigned(15 downto 0) is
-    variable result : unsigned(15 downto 0);
-  begin
-    for i in 0 to 7 loop
-      if even then
-        result(2*i+0) := data(30-2*i);
-        result(2*i+1) := data(2*i+1);
-      else
-        result(2*i+0) := data(2*i+0);
-        result(2*i+1) := data(31-2*i);
-      end if;
-    end loop;  -- i
-
-    return result;
-  end;
-
   type natural_array_t is array (<> natural range) of natural;
-  type u16_array_t is array (<> natural range) of unsigned(15 downto 0);
 
-  constant delay_config : natural_array_t_t(3 downto 0) := (19,13,7,5);
-  signal counters : u16_array_t(3 downto 0);    
+  signal outputs : std_ulogic_vector(3 downto 0);
+  signal trng_bit : std_ulogic;
+  signal trng_bit_1d : std_ulogic;
+  signal trng_bit_2d : std_ulogic;
+  signal trng_out : std_ulogic_vector(31 downto 0);
+  signal complete : std_ulogic;
     
 begin  -- architecture rtl
 
@@ -66,33 +52,41 @@ begin  -- architecture rtl
     
     osc_x: entity work.ring_osc
     generic map (
-      NumElments => delay_config(i))
+      NumElments => 3)
     port map (
-      clk_o => clk);
-
-    process (clk, reset_n_i) is
-    begin  -- process
-      if reset_n_i = '0' then             -- asynchronous reset (active low)
-        counters(i) <= to_unsigned(0,16);
-      elsif rising_edge(clk) then  -- rising clock edge
-        counters(i) <= counters(i)+1;
-      end if;
-    end process;
+      clk_o => outputs(i));
     
   end generate gen_osc;
 
   process (clk_i, reset_n_i) is
   begin  -- process
     if reset_n_i = '0' then             -- asynchronous reset (active low)
-      trng_1d <= (others => '0');
-      trng_2d <= (others => '0');
+      trng_bit <= '0';
+      trng_bit_1d <= '0';
+      trng_bit_2d <= '0';
+      trng_out <= X"00000001";;
+      complete <= '0';
     elsif rising_edge(clk_i) then  -- rising clock edge
-      trng_1d <= ((X"0000" & mix(counters(0),true))*(X"0000" & mix(counters(1),false)))*
-                 ((X"0000" & mix(counters(2),false))*(X"0000" & mix(counters(3),true)));
-      trng_2d <= trng_1d;      
+      
+      trng_bit <= ouputs(0) xor ouputs(1) xor ouputs(2) xor ouputs(3);
+      
+      trng_bit_1d <= trng_bit;
+      trng_bit_2d <= trng_bit_1d;
+      
+      if trng_bit_1d /= trng_bit_2d and complete = '0' then
+        trng_out <= trng_out(30 downto 0) & (trng_bit_1d and not trng_bit_2d);
+        complete <= trng_out(31);
+      end if;
+      
+      if read_i = '1' and complete = '1' then
+        trng_out <= X"00000001";
+        complete <= '0';
+      end if;
+      
     end if;
   end process;
 
-  trng_o <= trng_2d;
+  trng_o <= trng_out;
+  valid_o <= complete;
 
 end architecture rtl;
