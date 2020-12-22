@@ -24,7 +24,7 @@ use ieee.numeric_std.all;
 
 architecture lattice of ring_osc is
 
-  signal osc_elements : std_ulogic_vector(NumElments-1 downto 0);
+  signal osc_elements : std_ulogic_vector(NumElements-1 downto 0);
 
 begin  -- architecture lattice
 
@@ -37,5 +37,7 @@ begin  -- architecture lattice
       generic map(INIT=>"0000000000000010")
       port map(Z=>osc_elements(i),A=>osc_elements(i-1),B=>'0',C=>'0',D=>'0');
   end generate gen_ring_osc;
+
+  clk_o <= osc_elements(0);
 
 end architecture lattice;

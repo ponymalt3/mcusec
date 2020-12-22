@@ -27,7 +27,7 @@ use UNISIM.vcomponents.all;
 
 architecture xilinx of ring_osc is
 
-  signal osc_elements : std_ulogic_vector(NumElments-1 downto 0);
+  signal osc_elements : std_ulogic_vector(NumElements-1 downto 0);
 
 begin  -- architecture xilinx
 
@@ -40,5 +40,7 @@ begin  -- architecture xilinx
       generic map(INIT=>"10")
       port map(O=>osc_elements(i),I0=>osc_elements(i-1));
   end generate gen_ring_osc;
+
+  clk_o <= osc_elements(0);
 
 end architecture xilinx;

@@ -32,7 +32,7 @@ architecture intel of ring_osc is
       a_out : out std_logic);
   end component;
 
-  signal osc_elements : std_ulogic_vector(NumElments-1 downto 0);
+  signal osc_elements : std_ulogic_vector(NumElements-1 downto 0);
 
 begin  -- architecture intel
 
@@ -43,5 +43,7 @@ begin  -- architecture intel
     LCELL_x : LCELL
       port map (a_in=>not osc_elements(osc_elements'length-1),a_out=>osc_elements(0));
   end generate gen_ring_osc;
+
+  clk_o <= osc_elements(0);
 
 end architecture intel;

@@ -52,7 +52,7 @@ begin  -- architecture rtl
     
     osc_x: entity work.ring_osc
     generic map (
-      NumElments => 3)
+      NumElements => 3)
     port map (
       clk_o => outputs(i));
     
@@ -64,7 +64,7 @@ begin  -- architecture rtl
       trng_bit <= '0';
       trng_bit_1d <= '0';
       trng_bit_2d <= '0';
-      trng_out <= X"00000001";;
+      trng_out <= X"00000001";
       complete <= '0';
     elsif rising_edge(clk_i) then  -- rising clock edge
       

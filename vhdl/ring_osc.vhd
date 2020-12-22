@@ -26,7 +26,7 @@ use ieee.numeric_std.all;
 entity ring_osc is
                    
   generic (
-    NumElments : natural := 5);
+    NumElements : natural := 5);
 
   port (
     clk_o : out std_ulogic);

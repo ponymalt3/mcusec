@@ -26,7 +26,7 @@ use ieee.numeric_std.all;
 
 architecture sim of ring_osc is
 
-  signal osc_elements : std_ulogic_vector(NumElments-1 downto 0);
+  signal osc_elements : std_ulogic_vector(NumElements-1 downto 0);
 
 begin  -- architecture sim
 
@@ -35,5 +35,7 @@ begin  -- architecture sim
   gen_ring_osc: for i in 1 to osc_elements'length-1 generate
     osc_elements(i) <= transport osc_elements(i-1)) after 1 ns;
   end generate gen_ring_osc;
+
+  clk_o <= osc_elements(0);
 
 end architecture sim;
