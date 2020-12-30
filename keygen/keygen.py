@@ -4,7 +4,6 @@ import re
 import sys
 import getopt
 import os
-import io
 
 
 def parseKeyFile(filename):
@@ -20,30 +19,35 @@ def parseKeyFile(filename):
 
     return keyMap
 
-# if already keys available generate file with selected ones otherwise
-# generate new inputFile
-
 
 def main(args):
-    args, keys = getopt.getopt(args, 'hi:o:')
+    """Generates key lists in c++11 header format.\nSupporting two different functions:
 
-    print(keys)
+    1. Generates a new list of keys
 
-    inputFile = ''
-    outputFile = ''
+    2. If an existing key list is specified as input file,
+       another header file is generated which contains the selected keys as well as,
+       a key index mapping table.
+    """
+
+    args, keys = getopt.getopt(args, 'hi:o:', ['help', 'input=', 'output='])
 
     for arg, value in args:
         if arg in ('-i', '--input'):
             inputFile = value
         elif arg in ('-o', '--output'):
             outputFile = value
+        elif arg in ('-h', '--help'):
+            print(main.__doc__)
+            print('Usage: ./keygen.py [-i <inputfile>] -o <outputfile> keyname1 ...\n')
+            sys.exit(0)
 
     keyList = []
 
-    if outputFile == '':
+    if 'outputFile' not in locals():
         print('no output file specified!')
         sys.exit(1)
-    elif inputFile != '':
+    elif 'inputFile' not in locals():
         availableKeys = parseKeyFile(inputFile)
         keyIdList = []
 
