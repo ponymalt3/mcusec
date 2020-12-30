@@ -16,10 +16,8 @@
 --    authors or copyright holders be liable for any claim, damages or other
 --    liability, whether in an action of contract, tort or otherwise, arising from,
 --    out of or in connection with the Software or the use or other dealings in the
---    Software.
-                   
- 
- 
+--    Software.                   
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
@@ -37,11 +35,11 @@ architecture intel of ring_osc is
 begin  -- architecture intel
 
   LCELL_init : LCELL
-    port map (a_in=>not osc_elements(osc_elements'length-1),a_out=>osc_elements(0));
+    port map (a_in=>not osc_elements(NumElements-1),a_out=>osc_elements(0));
 
-  gen_ring_osc: for i in 1 to osc_elements'length-1 generate
+  gen_ring_osc: for i in 1 to NumElements-1 generate
     LCELL_x : LCELL
-      port map (a_in=>not osc_elements(osc_elements'length-1),a_out=>osc_elements(0));
+      port map (a_in=>osc_elements(i-1),a_out=>osc_elements(i));
   end generate gen_ring_osc;
 
   clk_o <= osc_elements(0);

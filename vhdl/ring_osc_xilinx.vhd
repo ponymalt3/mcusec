@@ -27,15 +27,21 @@ use UNISIM.vcomponents.all;
 
 architecture xilinx of ring_osc is
 
+  attribute DONT_TOUCH : string;
+  attribute DONT_TOUCH of LUT1_init: label is "TRUE";
+
   signal osc_elements : std_ulogic_vector(NumElements-1 downto 0);
 
 begin  -- architecture xilinx
 
   LUT1_init : LUT1
     generic map(INIT=>"01")
-    port map(O=>osc_elements(0),I0=>osc_elements(osc_elements'length-1));
+    port map(O=>osc_elements(0),I0=>osc_elements(NumElements-1));
 
-  gen_ring_osc: for i in 1 to osc_elements'length-1 generate
+  gen_ring_osc: for i in 1 to NumElements-1 generate
+      attribute DONT_TOUCH : string;
+      attribute DONT_TOUCH of LUT1_x: label is "TRUE";
+  begin
     LUT1_x : LUT1
       generic map(INIT=>"10")
       port map(O=>osc_elements(i),I0=>osc_elements(i-1));
