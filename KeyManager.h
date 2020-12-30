@@ -1,8 +1,8 @@
-/* 
+/*
  * MIT License
- * 
+ *
  * Copyright (c) 2020 Malte Graeper
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
@@ -19,7 +19,7 @@
  *   out of or in connection with the Software or the use or other dealings in the
  *   Software.
  */
- 
+
 #pragma once
 
 #include <stdint.h>
@@ -28,19 +28,32 @@ class KeyManager
 {
 public:
   typedef uint8_t Key[47];
-  
-	KeyManager(const Key *keys,uint32_t numKeys)
+
+	KeyManager(const Key *keys,uint32_t numKeys,const uint32_t *keyIdMap=nullptr)
 	{
 		m_keys=keys;
 		m_numKeys=numKeys;
+    m_keyIdMap=keyIdMap;
 	}
-	
-	const Key& getKey(uint32_t i) const
+
+	const Key& getKey(uint32_t id) const
 	{
-		return m_keys[i];
+    if(keyIdMap)
+    {
+      for(uint32_t i=0;i<m_numKeys;++i)
+      {
+        if(keyIdMap[i] == id)
+        {
+          return m_keys[i];
+        }
+      }
+    }
+
+		return m_keys[id];
 	}
-	
+
 protected:
   const Key *m_keys;
   uint32_t m_numKeys;
+  const uint32_t *m_keyIdMap;
 };
