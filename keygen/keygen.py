@@ -47,7 +47,7 @@ def main(args):
     if 'outputFile' not in locals():
         print('no output file specified!')
         sys.exit(1)
-    elif 'inputFile' not in locals():
+    elif 'inputFile' in locals():
         availableKeys = parseKeyFile(inputFile)
         keyIdList = []
 
