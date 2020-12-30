@@ -27,66 +27,109 @@ entity trng is
   port (
     clk_i      : in  std_ulogic;
     reset_n_i  : in  std_ulogic;
-    re_i    : in  std_ulogic;
-    trng_o     : out std_ulogic_vector(31 downto 0);
-    valid_o : out std_ulogic);
+    re_i       : in  std_ulogic;
+    trng_o     : out std_ulogic_vector(3 downto 0);
+    valid_o    : out std_ulogic);
 
 end entity trng;
 
 architecture rtl of trng is
 
-  type natural_array_t is array (<> natural range) of natural;
+  type natural_array_t is array (natural range <>) of natural;
+  constant delay_config : natural_array_t(3 downto 0) := (7,11,17,29);
+  
+  function mix (
+    signal data : unsigned;
+    constant even : boolean)
+    return unsigned is
+    variable result : unsigned(data'length-1 downto 0);
+  begin
+    for i in 0 to data'length/2-1 loop
+      if even then
+        result(2*i+0) := data(data'length-2-2*i);
+        result(2*i+1) := data(2*i+1);
+      else
+        result(2*i+0) := data(2*i+0);
+        result(2*i+1) := data(data'length-1-2*i);
+      end if;
+    end loop;  -- i
 
-  signal outputs : std_ulogic_vector(3 downto 0);
-  signal trng_bit : std_ulogic;
-  signal trng_bit_1d : std_ulogic;
-  signal trng_bit_2d : std_ulogic;
-  signal trng_out : std_ulogic_vector(31 downto 0);
-  signal complete : std_ulogic;
+    return result;
+  end;
+
+  type u8_array_t is array (natural range <>) of unsigned(7 downto 0);  
+  signal counters : u8_array_t(3 downto 0);
+
+  type state_t is (ST_START,ST_WAIT,ST_COMPLETE);
+  signal state : state_t;
+
+  signal trng : unsigned(31 downto 0);
+  signal trng_1d : std_ulogic_vector(31 downto 0);
+  signal trng_out : std_ulogic_vector(3 downto 0);
+  signal trng_compare : std_ulogic_vector(3 downto 0);
+  signal trng_bits_changed : std_ulogic_vector(3 downto 0);
     
 begin  -- architecture rtl
 
   gen_osc: for i in 0 to 3 generate
     signal clk : std_ulogic;
-  begin
-    
+  begin    
     osc_x: entity work.ring_osc
-    generic map (
-      NumElements => 3)
-    port map (
-      clk_o => outputs(i));
-    
+      generic map (
+        NumElements => delay_config(i))
+      port map (
+        clk_o => clk);
+
+    process (clk, reset_n_i) is
+    begin  -- process
+      if reset_n_i = '0' then             -- asynchronous reset (active low)
+        counters(i) <= to_unsigned(0,8);
+      elsif rising_edge(clk) then  -- rising clock edge
+        counters(i) <= counters(i)+1;
+      end if;
+    end process;    
   end generate gen_osc;
 
   process (clk_i, reset_n_i) is
   begin  -- process
     if reset_n_i = '0' then             -- asynchronous reset (active low)
-      trng_bit <= '0';
-      trng_bit_1d <= '0';
-      trng_bit_2d <= '0';
-      trng_out <= X"00000001";
-      complete <= '0';
+      trng <= to_unsigned(0,32);
+      trng_1d <= (others => '0');
     elsif rising_edge(clk_i) then  -- rising clock edge
-      
-      trng_bit <= ouputs(0) xor ouputs(1) xor ouputs(2) xor ouputs(3);
-      
-      trng_bit_1d <= trng_bit;
-      trng_bit_2d <= trng_bit_1d;
-      
-      if trng_bit_1d /= trng_bit_2d and complete = '0' then
-        trng_out <= trng_out(30 downto 0) & (trng_bit_1d and not trng_bit_2d);
-        complete <= trng_out(31);
-      end if;
-      
-      if read_i = '1' and complete = '1' then
-        trng_out <= X"00000001";
-        complete <= '0';
-      end if;
-      
+      trng <= (mix(counters(0),true)*mix(counters(1),false))*(mix(counters(2),false)*mix(counters(3),true));
+      trng_1d <= trng_1d xor to_stdULogicVector(std_logic_vector(trng));
+      trng_out <= trng_1d(3 downto 0);
     end if;
   end process;
 
-  trng_o <= trng_out;
-  valid_o <= complete;
+  process (clk_i, reset_n_i) is
+  begin  -- process
+    if reset_n_i = '0' then             -- asynchronous reset (active low)
+      trng_compare <= (others => '0');
+      trng_o <= (others => '0');
+      state <= ST_START;
+      trng_bits_changed <= (others => '0');
+    elsif rising_edge(clk_i) then  -- rising clock edge
+      case state is
+        when ST_START =>
+          trng_compare <= trng_out;
+          trng_bits_changed <= (others => '1');
+          state <= ST_WAIT;
+        when ST_WAIT =>
+          trng_bits_changed <= trng_bits_changed and not (trng_compare xor trng_out);
+          if trng_bits_changed = "0000" then
+            trng_o <= trng_out;
+            state <= ST_COMPLETE;
+          end if;
+        when ST_COMPLETE =>
+          if re_i = '1' then
+            state <= ST_START;
+          end if;
+        when others => null;
+      end case;
+    end if;
+  end process;
+
+  valid_o <= '1' when state = ST_COMPLETE else '0';
 
 end architecture rtl;
