@@ -1,8 +1,8 @@
-/* 
+/*
  * MIT License
- * 
+ *
  * Copyright (c) 2020 Malte Graeper
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
@@ -26,48 +26,34 @@
 
 #include "AuthenicatedCallProvider.h"
 
+namespace Provider {
+#include "AllKeys.h"
+}
+
+namespace Client {
+#include "ClientKey1.h"
+}
+
 int main()
 {
-	KeyManager::Key key1="1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJ";
-	key1[46]='K';
-	
-	KeyManager km(&key1,1);
-	
-	Crypt crypt(km);
-	
-	uint64_t rnd=(uint64_t('SRQP')<<32)+'ONML';
-	
-	Crypt::Hash hash;
-	crypt.sign(0,rnd,hash);
-	
-	std::cout<<"hash: ";
-	for(uint32_t i=0;i<5;++i)
-	{
-		std::cout<<std::hex<<((hash.data[i]>>24)&0xFF);
-		std::cout<<std::hex<<((hash.data[i]>>16)&0xFF);
-		std::cout<<std::hex<<((hash.data[i]>>8)&0xFF);
-		std::cout<<std::hex<<((hash.data[i]>>0)&0xFF);
-	}
-	
-	std::cout<<std::dec<<" (should be b7d41243314081ed66be7ff92c61521b525ab85d)\n";
-	
-	bool verified=crypt.verify(hash,0,rnd);
-	
-	std::cout<<"verified: "<<(verified?"true":"false")<<"\n";
-	
-	
-	AuthenicatedCallProvider acp(km);
-	
-	acp.registerFunction(99,0,[&](uint32_t data){
+	KeyManager kmServer(Provider::keys,sizeof(Provider::keys)/sizeof(KeyManager::Key));
+	AuthenicatedCallProvider acp(kmServer);
+
+  //using key 'key1' (index: 2)
+	acp.registerFunction(99,2,[&](uint32_t data){
 		std::cout<<"function called with param = "<<(data)<<"\n";
 	});
-	
+
+	//client
+	KeyManager kmClient(Client::keys,sizeof(Client::keys)/sizeof(KeyManager::Key),Client::keyIdMap);
+	Crypt crypt(kmClient);
+
 	uint64_t token=acp.requestCallToken(99,123456789);
-	
+
 	Crypt::Hash authFunctionCall;
-	crypt.sign(0,token,authFunctionCall);
-	
+	crypt.sign(2,token,authFunctionCall);
+
 	acp.executeCall(authFunctionCall);
-	
+
 	return 0;
 }
