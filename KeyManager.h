@@ -38,11 +38,11 @@ public:
 
 	const Key& getKey(uint32_t id) const
 	{
-    if(keyIdMap)
+    if(m_keyIdMap)
     {
       for(uint32_t i=0;i<m_numKeys;++i)
       {
-        if(keyIdMap[i] == id)
+        if(m_keyIdMap[i] == id)
         {
           return m_keys[i];
         }
