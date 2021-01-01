@@ -39,3 +39,8 @@
 */incremental_db/*
 *~
 *.bak
+
+CMakeFiles/*
+CMakeCache.txt
+cmake_install.cmake
+Makefile
