@@ -13,7 +13,6 @@ def parseKeyFile(filename):
     keyMap = {}
     i = 0
     for mo in m:
-        print('mo: ' + mo[1])
         keyMap[mo[1]] = (bytes([int(x, 16) for x in mo[0].split(', ')]), i)
         i += 1
 

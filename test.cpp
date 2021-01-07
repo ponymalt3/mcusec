@@ -37,14 +37,13 @@ namespace Client {
 int main()
 {
 	KeyManager kmServer(Provider::keys,sizeof(Provider::keys)/sizeof(KeyManager::Key));
-	AuthenicatedCallProvider acp(kmServer);
+	AuthenticatedCallProvider acp(kmServer);
 
   //using key 'key1' (index: 2)
 	acp.registerFunction(99,2,[&](uint32_t data){
 		std::cout<<"function called with param = "<<(data)<<"\n";
 	});
 
-	//client
 	KeyManager kmClient(Client::keys,sizeof(Client::keys)/sizeof(KeyManager::Key),Client::keyIdMap);
 	Crypt crypt(kmClient);
 
