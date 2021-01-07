@@ -98,7 +98,10 @@ begin  -- architecture rtl
     elsif rising_edge(clk_i) then  -- rising clock edge
       trng <= (mix(counters(0),true)*mix(counters(1),false))*(mix(counters(2),false)*mix(counters(3),true));
       trng_1d <= trng_1d xor to_stdULogicVector(std_logic_vector(trng));
-      trng_out <= trng_1d(3 downto 0);
+      trng_out <= trng_1d(31 downto 28) xor trng_1d(27 downto 24) xor
+                  trng_1d(23 downto 20) xor trng_1d(19 downto 16) xor
+                  trng_1d(15 downto 12) xor trng_1d(11 downto 8) xor
+                  trng_1d(7 downto 4) xor trng_1d(3 downto 0);
     end if;
   end process;
 
