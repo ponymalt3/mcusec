@@ -4,10 +4,11 @@ import re
 import sys
 import getopt
 import os
+import pathlib
 
 
 def parseKeyFile(filename):
-    with open(filename, 'r') as f:
+    with open(str(pathlib.Path(filename).resolve()), 'r') as f:
         m = re.findall(r'  \{(.*)\}, //(.*)\n', f.read())
 
     keyMap = {}
@@ -62,8 +63,15 @@ def main(args):
         for key in keys:
             keyList.append((key, os.urandom(47)))
 
-    with open(outputFile, 'w') as f:
-        f.write('#pragma once\n\n#include "KeyManager.h"\n\n'
+    filename = pathlib.Path(outputFile).resolve()
+
+    relInclude = os.path.relpath(str(pathlib.Path('..').resolve()), str(filename.parents[0]))
+
+    if relInclude != '':
+        relInclude = relInclude + '/'
+
+    with open(str(filename), 'w') as f:
+        f.write('#pragma once\n\n#include "' + relInclude.replace('\\','/') + 'KeyManager.h"\n\n'
                 '#ifndef KEY_ATTR\n#  define KEY_ATTR\n#endif\n\n'
                 'constexpr KeyManager::Key keys[] KEY_ATTR = {\n')
 
